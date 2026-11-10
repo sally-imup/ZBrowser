@@ -19,9 +19,9 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
-        // Batasi ABI supaya APK lebih kecil. Oppo K3 pakai arm64.
+        // Hanya arm64 (Oppo K3 pakai arm64). Tiap ABI menambah ~100 MB karena libxul.so GeckoView.
         ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            abiFilters += listOf("arm64-v8a")
         }
     }
 
