@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Z Browser</string>
+    <string name="url_hint">Cari atau ketik URL</string>
+    <string name="nav_back">Kembali</string>
+    <string name="nav_forward">Maju</string>
+    <string name="nav_reload">Muat ulang</string>
+    <string name="nav_tabs">Tab</string>
+    <string name="nav_menu">Menu</string>
+    <string name="tabs_count">Tab %1$d</string>
+    <string name="new_tab">Tab baru</string>
+    <string name="incognito_tab">Incognito</string>
+    <string name="history">Riwayat</string>
+    <string name="settings">Pengaturan</string>
+    <string name="new_group">Grup baru</string>
+    <string name="group_name">Nama grup</string>
+    <string name="create">Buat</string>
+    <string name="cancel">Batal</string>
+    <string name="delete_group">Hapus grup</string>
+    <string name="move_to_group">Pindah ke grup</string>
+    <string name="no_group">Tanpa grup</string>
+    <string name="ungrouped">Tanpa grup</string>
+    <string name="close_tab">Tutup tab</string>
+    <string name="blank_page">Kosong</string>
+    <string name="history_title">Riwayat</string>
+    <string name="clear_history">Hapus semua</string>
+    <string name="no_history">Belum ada riwayat</string>
+    <string name="settings_title">Pengaturan</string>
+    <string name="section_language">Bahasa</string>
+    <string name="lang_system">Ikuti sistem</string>
+    <string name="lang_en">Inggris</string>
+    <string name="lang_id">Indonesia</string>
+    <string name="section_theme">Tema</string>
+    <string name="theme_system">Ikuti sistem</string>
+    <string name="theme_light">Terang</string>
+    <string name="theme_dark">Gelap</string>
+    <string name="section_search">Mesin pencari</string>
+    <string name="section_dns">DNS (Cloudflare)</string>
+    <string name="dns_desc">Browser memakai DNS sistem. Untuk Cloudflare, atur Private DNS ke one.one.one.one di pengaturan jaringan Android.</string>
+    <string name="open_dns_settings">Buka pengaturan jaringan</string>
+    <string name="done">Selesai</string>
+    <string name="incognito_desc">Incognito tidak menyimpan riwayat dan cache. Cookie tetap dibagi dengan tab biasa.</string>
+</resources>

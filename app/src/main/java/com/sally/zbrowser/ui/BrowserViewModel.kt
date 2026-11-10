@@ -1,7 +1,15 @@
 package com.sally.zbrowser.ui
 
 import android.app.Application
+import android.graphics.Bitmap
+import android.view.ViewGroup
+import android.webkit.WebChromeClient
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.lifecycle.AndroidViewModel
+import androidx.webkit.WebSettingsCompat
+import androidx.webkit.WebViewFeature
 import com.sally.zbrowser.data.BrowserTab
 import com.sally.zbrowser.data.HistoryEntry
 import com.sally.zbrowser.data.HistoryStore
@@ -10,20 +18,19 @@ import com.sally.zbrowser.data.SettingsStore
 import com.sally.zbrowser.data.TabGroup
 import com.sally.zbrowser.data.ThemeMode
 import com.sally.zbrowser.data.resolveInput
-import com.sally.zbrowser.engine.GeckoEngine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import org.mozilla.geckoview.GeckoSession
 
 class BrowserViewModel(application: Application) : AndroidViewModel(application) {
 
     private val settings = SettingsStore(application)
     private val historyStore = HistoryStore(application)
 
-    private val sessions = HashMap<String, GeckoSession>()
+    private val webViews = HashMap<String, WebView>()
     private var counter = 0
+    private var darkWeb = false
 
     private val _tabs = MutableStateFlow<List<BrowserTab>>(emptyList())
     val tabs: StateFlow<List<BrowserTab>> = _tabs.asStateFlow()
@@ -54,22 +61,26 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
         _tabs.update { it + BrowserTab(id = id, incognito = incognito, groupId = groupId) }
         _activeId.value = id
 
-        val session = GeckoEngine.newSession(getApplication(), incognito)
-        attachDelegates(id, session)
-        sessions[id] = session
-
-        if (url != null) session.loadUri(url)
+        val wv = createWebView(id, incognito)
+        webViews[id] = wv
+        syncPause()
+        if (url != null) wv.loadUrl(url)
         return id
     }
 
-    fun sessionFor(id: String): GeckoSession? = sessions[id]
+    fun webViewFor(id: String): WebView? = webViews[id]
 
     fun selectTab(id: String) {
         _activeId.value = id
+        syncPause()
     }
 
     fun closeTab(id: String) {
-        sessions.remove(id)?.close()
+        webViews.remove(id)?.let { wv ->
+            (wv.parent as? ViewGroup)?.removeView(wv)
+            wv.stopLoading()
+            wv.destroy()
+        }
         val remaining = _tabs.value.filterNot { it.id == id }
         if (remaining.isEmpty()) {
             _tabs.value = emptyList()
@@ -80,31 +91,31 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
         if (_activeId.value == id) {
             _activeId.value = remaining.last().id
         }
+        syncPause()
     }
 
     fun navigate(input: String) {
         val id = _activeId.value ?: return
-        sessions[id]?.loadUri(resolveInput(input, _engine.value))
+        webViews[id]?.loadUrl(resolveInput(input, _engine.value))
     }
 
     fun back() {
-        _activeId.value?.let { sessions[it]?.goBack() }
+        _activeId.value?.let { webViews[it]?.goBack() }
     }
 
     fun forward() {
-        _activeId.value?.let { sessions[it]?.goForward() }
+        _activeId.value?.let { webViews[it]?.goForward() }
     }
 
     fun reload() {
-        _activeId.value?.let { sessions[it]?.reload() }
+        _activeId.value?.let { webViews[it]?.reload() }
     }
 
     // ---- Grup tab ----
 
-    fun createGroup(name: String): String {
+    fun createGroup(name: String) {
         val id = "grp-${++counter}"
         _groups.update { it + TabGroup(id, name) }
-        return id
     }
 
     fun deleteGroup(groupId: String) {
@@ -137,47 +148,72 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
         _engine.value = engine
     }
 
+    fun applyWebDarkMode(dark: Boolean) {
+        darkWeb = dark
+        webViews.values.forEach { applyForceDark(it) }
+    }
+
     // ---- Internal ----
 
-    private fun attachDelegates(id: String, session: GeckoSession) {
-        session.navigationDelegate = object : GeckoSession.NavigationDelegate {
-            override fun onLocationChange(
-                session: GeckoSession,
-                url: String?,
-                perms: MutableList<GeckoSession.PermissionDelegate.ContentPermission>,
-                hasUserGesture: Boolean,
-            ) {
-                if (url != null) updateTab(id) { it.copy(url = url) }
+    private fun createWebView(id: String, incognito: Boolean): WebView {
+        return WebView(getApplication()).apply {
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.builtInZoomControls = true
+            settings.displayZoomControls = false
+            settings.cacheMode = if (incognito) WebSettings.LOAD_NO_CACHE else WebSettings.LOAD_DEFAULT
+            applyForceDark(this)
+
+            webViewClient = object : WebViewClient() {
+                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                    updateTab(id) {
+                        it.copy(
+                            url = url ?: it.url,
+                            loading = true,
+                            canGoBack = view?.canGoBack() == true,
+                            canGoForward = view?.canGoForward() == true,
+                        )
+                    }
+                }
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    updateTab(id) {
+                        it.copy(
+                            url = url ?: it.url,
+                            loading = false,
+                            canGoBack = view?.canGoBack() == true,
+                            canGoForward = view?.canGoForward() == true,
+                        )
+                    }
+                    val tab = _tabs.value.firstOrNull { it.id == id } ?: return
+                    if (!tab.incognito && url != null && url != "about:blank") {
+                        recordHistory(HistoryEntry(url, tab.title, System.currentTimeMillis()))
+                    }
+                }
             }
 
-            override fun onCanGoBack(session: GeckoSession, canGoBack: Boolean) {
-                updateTab(id) { it.copy(canGoBack = canGoBack) }
-            }
-
-            override fun onCanGoForward(session: GeckoSession, canGoForward: Boolean) {
-                updateTab(id) { it.copy(canGoForward = canGoForward) }
-            }
-        }
-
-        session.progressDelegate = object : GeckoSession.ProgressDelegate {
-            override fun onPageStart(session: GeckoSession, url: String) {
-                updateTab(id) { it.copy(loading = true, url = url) }
-            }
-
-            override fun onPageStop(session: GeckoSession, success: Boolean) {
-                updateTab(id) { it.copy(loading = false) }
-                val tab = _tabs.value.firstOrNull { it.id == id } ?: return
-                // Tab incognito tidak dicatat ke riwayat.
-                if (!tab.incognito && success && tab.url != "about:blank") {
-                    recordHistory(HistoryEntry(tab.url, tab.title, System.currentTimeMillis()))
+            webChromeClient = object : WebChromeClient() {
+                override fun onReceivedTitle(view: WebView?, title: String?) {
+                    updateTab(id) { it.copy(title = title ?: it.url) }
                 }
             }
         }
+    }
 
-        session.contentDelegate = object : GeckoSession.ContentDelegate {
-            override fun onTitleChange(session: GeckoSession, title: String?) {
-                updateTab(id) { it.copy(title = title ?: it.url) }
-            }
+    private fun applyForceDark(wv: WebView) {
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
+            WebSettingsCompat.setForceDark(
+                wv.settings,
+                if (darkWeb) WebSettingsCompat.FORCE_DARK_ON else WebSettingsCompat.FORCE_DARK_OFF,
+            )
+        }
+    }
+
+    /** Hanya WebView tab aktif yang berjalan, sisanya dijeda supaya hemat baterai dan RAM. */
+    private fun syncPause() {
+        val active = _activeId.value
+        webViews.forEach { (id, wv) ->
+            if (id == active) wv.onResume() else wv.onPause()
         }
     }
 
@@ -192,8 +228,8 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
     }
 
     override fun onCleared() {
-        sessions.values.forEach { it.close() }
-        sessions.clear()
+        webViews.values.forEach { it.destroy() }
+        webViews.clear()
     }
 
     private companion object {

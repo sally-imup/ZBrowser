@@ -1,10 +1,10 @@
 package com.sally.zbrowser
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -13,7 +13,7 @@ import com.sally.zbrowser.ui.BrowserScreen
 import com.sally.zbrowser.ui.BrowserViewModel
 import com.sally.zbrowser.ui.theme.ZBrowserTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val vm: BrowserViewModel by viewModels()
 
@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.DARK -> true
             }
             ZBrowserTheme(darkTheme = dark) {
-                BrowserScreen(vm = vm, onExit = { finish() })
+                BrowserScreen(vm = vm, dark = dark, onExit = { finish() })
             }
         }
     }
