@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Cincin kompas -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:fillColor="#00000000"
+        android:pathData="M54,20 A34,34 0 1,1 53.99,20 Z" />
+    <!-- Jarum utara (putih) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,28 L62,54 L46,54 Z" />
+    <!-- Jarum selatan (pink muda) -->
+    <path
+        android:fillColor="#FFB0CB"
+        android:pathData="M54,80 L46,54 L62,54 Z" />
+    <!-- Titik pusat -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M51,54 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" />
+</vector>
