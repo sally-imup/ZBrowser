@@ -48,8 +48,16 @@ android {
     }
 }
 
+// Paksa androidx.core ke versi yang kompatibel dengan AGP 8.7.3.
+// Versi 1.17.0 ikut terbawa dari dependency lain dan butuh AGP 8.9.1+.
+configurations.all {
+    resolutionStrategy {
+        force("androidx.core:core:1.15.0", "androidx.core:core-ktx:1.15.0")
+    }
+}
+
 dependencies {
-    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
