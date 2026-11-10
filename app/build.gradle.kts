@@ -8,7 +8,7 @@ val geckoviewVersion: String = providers.gradleProperty("geckoviewVersion").get(
 
 android {
     namespace = "com.sally.zbrowser"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.sally.zbrowser"
