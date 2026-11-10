@@ -26,10 +26,14 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list | grep "platforms;" || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36"
 
-      - name: Build debug and release APK
-        run: gradle :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
+      - name: Build debug APK
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Build release APK
+        run: gradle :app:assembleRelease --no-daemon --stacktrace
 
       - name: Upload APK
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: z-browser-apk

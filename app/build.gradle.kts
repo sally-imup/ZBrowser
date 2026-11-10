@@ -29,6 +29,13 @@ android {
         compose = true
     }
 
+    // Lint bawaan AGP 8.7.3 crash dengan Kotlin 2.3 (IncompatibleClassChangeError).
+    // Matikan pengecekan lint di build release sampai AGP dinaikkan.
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
