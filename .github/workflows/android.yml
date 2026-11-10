@@ -20,6 +20,11 @@ jobs:
         with:
           gradle-version: '8.10.2'
 
+      - name: Install Android platform 37
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37"
+
       - name: Build debug and release APK
         run: gradle :app:assembleDebug :app:assembleRelease --no-daemon --stacktrace
 
